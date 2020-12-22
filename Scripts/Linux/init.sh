@@ -12,7 +12,7 @@ echo "Do you want to install the necessary tools?(y/n): "
 read B_INSTALL_REQUIREMENTS
 
 #install requirements
-if ["$B_INSTALL_REQUIREMENTS"="y"]; then
+if [ "$B_INSTALL_REQUIREMENTS" = "y" ]; then
     #sudo apt update upgrade
     #sudo apt-get update upgrade
     #echo "Where do you want to install the necessary tools?: "

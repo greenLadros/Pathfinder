@@ -82,25 +82,94 @@ args:
 #enumerate system&network
 function enum_netsys()
 {
-    echo -e '\e[0m' "Enumerating Network&System..."
+    echo -e '\e[0m' "Enumerating Network&System on $1..."
     nmap_res=$(nmap -T4 -A -p- $1)
+    #retriving valuable info
+    os_info="$(grep OS nmap_res)"
+    ports_info="$(grep open nikto_res_http)"
+    outdated_info="$(grep outdated nmap_res)"
+    vulns_info="$(grep vulnrable nmap_res)"
+    retrived_info="$(grep retrived nmap_res)"
+    #finding vulns
+    vulns_found=0
+    vulns=""
+    if [ -n "$os_info" ]; then
+        $vulns="$vulns\n +Try to search for exploits specific to this os and version. For exploits: https://www.exploit-db.com/"
+        let vulns_found++
+    fi
+    if [ -n "$ports_info" ]; then
+        $vulns="$vulns\n +Open ports found, you should look for vulns in the protocol or the service running on it. For exploits: https://www.exploit-db.com/"
+        let vulns_found++
+    fi
+    if [ -n "$vulns_info" ]; then
+        $vulns="$vulns\n +If you dont know what those vulns mean you should google them (Maybe they will be helpfull). For a great resource: https://www.exploit-db.com/"
+        let vulns_found++
+    fi
+    if [ -n "$outdated_info" ]; then
+        $vulns="$vulns\n +Apache/0.0.0 is outdated, This version is probably vulnrable to alot of exploits. For exploits: https://www.exploit-db.com/"
+        let vulns_found++
+    fi
     echo "Finished Enumerating Network&System!"
+    #dislaying results
     echo -e '\e[32m' "--------------------NetSysPath--------------------"
-    echo $nmap_res
+    echo "Info:"
+    echo "+OS: $os_info"
+    echo "+Ports: $ports_info"
+    echo "+OudatedSoftware: $outdated_info"
+    echo "+OtherVulns: $vulns_info"
+    echo "+Retrived(Most of the time its not important): $retrived_info"
+    echo             "__________________________________________________"
+    echo "Found $vulns_found vulnerabilities:"
+    echo $vulns
     echo             "--------------------------------------------------"
 }
 
 #enumerate web
 function enum_web()
 {
-    echo -e '\e[0m' "Enumerating WebApp..."
+    echo -e '\e[0m' "Enumerating WebApp on $1..."
     nikto_res_http=$(nikto -host $1:80)
     nikto_res_https=$(nikto -host $1:443)
     #dirb_res=$(dirb --options)
+    #retriving valuable info
+    server_info="http:$(grep server nikto_res_http),https:$(grep server nikto_res_https)"
+    cgi_info="http:$(grep CGI nikto_res_http),https:$(grep CGI nikto_res_https)"
+    outdated_info="http:$(grep outdated nikto_res_http),https:$(grep outdated nikto_res_https)"
+    vulns_info="http:$(grep vulnrable nikto_res_http),https:$(grep vulnrable nikto_res_https)"
+    retrived_info="http:$(grep retrived nikto_res_http),https:$(grep retrived nikto_res_https)"
+    dir_info="dirb_res"
+    #finding vulns
+    vulns_found=0
+    vulns=""
+    if [[ "$cgi_info" == "+ CGI"* ]]; then
+        $vulns="$vulns\n +CGI directories found, Try Command Injection on the server system with the cgi scripts. For more info: https://www.exploit-db.com/"
+        let vulns_found++
+    fi
+    if [ -n "$outdated_info" ]; then
+        $vulns="$vulns\n +Apache/0.0.0 is outdated, This version is probably vulnrable to alot of exploits. For exploits: https://www.exploit-db.com/"
+        let vulns_found++
+    fi
+    if [ -n"$vulns_info" ]; then
+        $vulns="$vulns\n +If you dont know what those vulns mean you should google them (Maybe they will be helpfull). For a great resource: https://www.exploit-db.com/"
+        let vulns_found++
+    fi
+    if [ -n "$Hidden" ]; then
+        $vulns="$vulns\n +You should try and go to those directories (Maybe you will find something the owners dont want you to see)."
+        let vulns_found++
+    fi
     echo "Finished Enumerating WebApp!"
+    #dislaying results
     echo -e '\e[32m' "--------------------WebAppPath--------------------"
-    echo $nikto_res_http
-    echo $nikto_res_https
+    echo "Info:"
+    echo "+Server: $server_info"
+    echo "+CGI: $cgi_info"
+    echo "+OudatedSoftware: $outdated_info"
+    echo "+OtherVulns: $vulns_info"
+    echo "+HiddenDirectories: $dir_info"
+    echo "+Retrived(Most of the time its not important): $retrived_info"
+    echo             "__________________________________________________"
+    echo "Found $vulns_found vulnerabilities:"
+    echo $vulns
     echo             "--------------------------------------------------"
 }
 
